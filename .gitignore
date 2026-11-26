@@ -1,0 +1,19 @@
+# 安装产物（install.sh 生成，不进仓库）
+.venv/
+.venv-ml/
+fetcher/.venv/
+media-convert/bin/
+img-dewatermark/models/
+stem-split/models/
+.install-flags
+# 输出和缓存
+fetcher/output/
+output/
+__pycache__/
+*.pyc
+.cache/
+# 绝不提交凭证
+.env
+.env.*
+*.pem
+*.key

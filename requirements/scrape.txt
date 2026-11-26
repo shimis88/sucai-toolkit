@@ -1,0 +1,5 @@
+# 抓取 + 口播转写（fetcher/.venv）。只用 PyPI 官方包。
+requests>=2.31
+yt-dlp>=2026.11.23
+yt-dlp-ejs>=0.8.0        # YouTube 校验求解器（需要 node 或 deno）
+faster-whisper>=1.2.1    # --transcribe

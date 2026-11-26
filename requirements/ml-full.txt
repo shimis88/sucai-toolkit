@@ -1,0 +1,5 @@
+# --full：Florence-2 找无字 logo（transformers 必须 <4.50，Florence-2 远程代码在新版会坏）
+torchvision==0.20.1
+transformers==4.49.0
+tokenizers==0.21.4
+timm==1.0.15

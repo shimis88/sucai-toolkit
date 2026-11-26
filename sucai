@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# sucai：素材工具统一入口。一个需求一条命令。运行 `sucai help` 看全部。
+set -euo pipefail
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+ROOT="$(cd "$(dirname "$SELF")" && pwd)"
+PY="$ROOT/fetcher/.venv/bin/python"
+CV="$ROOT/media-convert/convert.sh"
+
+media_root() {
+  if [[ -n "${SUCAI_MEDIA:-}" ]]; then echo "$SUCAI_MEDIA"
+  elif [[ -w /workspace ]]; then echo /workspace/media
+  else echo "$HOME/sucai-media"; fi
+}
+clean() { python3 "$ROOT/fetcher/cleanup.py" -q || true; }
+need_py() { [[ -x "$PY" ]] || { echo "还没安装：bash $ROOT/install.sh" >&2; exit 1; }; }
+
+usage() {
+  cat <<U
+sucai —— 素材工具（by shimis @shimis_88）
+
+  sucai get <链接> [-o 目录] [--transcribe] [--with-comments] [--max-height N]
+                                单条：文案 + 数据 + 最高清原片（--transcribe 再出口播文字）
+  sucai batch <文件|链接|-> [-o 目录] [--no-dewm] [--gif] [--audio]
+                                一堆链接或分享口令，并行抓，平台原图干净的不去水印
+  sucai x <视频> [-o 出.mp4] [--crf 19]   压成适合发 X（长边 1920，SSIM ≥0.97 自检）
+  sucai gif <视频> [-o 出.gif] [--start s --end s --speed n]   转 GIF（≤15MB）
+  sucai size <视频> --max-mb N [-o 出.mp4]                     压到指定大小
+  sucai audio <视频> [-o 出.mp3]          抽整条音轨 / BGM
+  sucai stems <视频或音频> [-o 目录]   分离人声和伴奏
+  sucai dewm <图或文件夹> [-o 目录] [--box x,y,w,h --no-detect]   图片去水印（保守）
+  sucai hls <m3u8地址> -o 出.mp4           网页里的 HLS 流原样存成 mp4
+  sucai zip <文件夹> [-o 包.zip]            打包
+  sucai convert <子命令> ...                 全部转换命令（to-mp4、to-jpg、cover、info…）
+  sucai media                               打印素材目录（\$SUCAI_MEDIA，默认 $(media_root)）
+  sucai clean                               删掉超过 7 天的素材
+  sucai doctor                              检查安装
+  sucai selftest                            离线自测（不联网，约 1 分钟）
+  sucai update                              git pull + 重新运行 install.sh
+
+不写 -o 时成品放在 \$(sucai media)/<日期-时间>/ 下。
+U
+}
+
+# 取出 -o/--out，其余参数原样保留到 REST
+parse_out() {
+  OUT=""; REST=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -o|--out) OUT="$2"; shift 2 ;;
+      *) REST+=("$1"); shift ;;
+    esac
+  done
+}
+task_dir() { local d; d="$(media_root)/$(date +%Y%m%d-%H%M%S)${1:+-$1}"; mkdir -p "$d"; echo "$d"; }
+first_file() { local a; for a in "$@"; do [[ "$a" != -* && -e "$a" ]] && { echo "$a"; return; }; done; }
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  help|-h|--help) usage ;;
+  media) media_root ;;
+  clean) python3 "$ROOT/fetcher/cleanup.py" ;;
+  get)
+    need_py; parse_out "$@"; [[ -n "$OUT" ]] || OUT="$(task_dir get)"
+    OUT="$(readlink -m "$OUT")"
+    clean; cd "$ROOT/fetcher" && exec "$PY" get.py --with-media "${REST[@]}" --out "$OUT" ;;
+  batch)
+    need_py; parse_out "$@"; [[ -n "$OUT" ]] || OUT="$(task_dir batch)"
+    ARGS=(); for a in "${REST[@]}"; do [[ -f "$a" ]] && a="$(readlink -f "$a")"; ARGS+=("$a"); done  # 先转绝对路径再 cd
+    OUT="$(readlink -m "$OUT")"
+    cd "$ROOT/fetcher" && exec "$PY" batch.py "${ARGS[@]}" --out "$OUT" ;;
+  x|gif|size|audio)
+    parse_out "$@"; in="$(first_file "${REST[@]}")"; [[ -n "$in" ]] || { echo "没找到输入文件" >&2; exit 2; }
+    base="$(basename "${in%.*}")"
+    case "$cmd" in
+      x) sub=to-x; ext=mp4; suf=_X版 ;;
+      gif) sub=to-gif; ext=gif; suf="" ;;
+      size) sub=to-size; ext=mp4; suf=_压缩 ;;
+      audio) sub=audio; ext=mp3; suf=_音轨 ;;
+    esac
+    [[ -n "$OUT" ]] || OUT="$(task_dir "$cmd")/${base}${suf}.$ext"
+    clean; exec "$CV" "$sub" -o "$OUT" "${REST[@]}" ;;
+  stems)
+    parse_out "$@"; [[ -n "$OUT" ]] || OUT="$(task_dir stems)"
+    clean; exec "$CV" stems -o "$OUT" "${REST[@]}" ;;
+  dewm)
+    parse_out "$@"; [[ -n "$OUT" ]] || OUT="$(task_dir dewm)"
+    clean; exec "$ROOT/img-dewatermark/run.sh" "${REST[@]}" --out "$OUT" ;;
+  hls)
+    parse_out "$@"; [[ ${#REST[@]} -ge 1 ]] || { echo "用法: sucai hls <m3u8地址> -o 出.mp4" >&2; exit 2; }
+    [[ -n "$OUT" ]] || OUT="$(task_dir hls)/video.mp4"
+    mkdir -p "$(dirname "$OUT")"; clean
+    ffmpeg -hide_banner -loglevel error -nostdin -y -i "${REST[0]}" -c copy -movflags +faststart "$OUT" && echo "$OUT" ;;
+  zip)
+    parse_out "$@"; src="${REST[0]:-}"; [[ -d "$src" ]] || { echo "用法: sucai zip <文件夹> [-o 包.zip]" >&2; exit 2; }
+    src="$(cd "$src" && pwd)"; [[ -n "$OUT" ]] || OUT="$src.zip"
+    (cd "$(dirname "$src")" && python3 -m zipfile -c "$(readlink -m "$OUT")" "$(basename "$src")/") && echo "$OUT" ;;
+  convert) exec "$CV" "$@" ;;
+  doctor) exec bash "$ROOT/tests/doctor.sh" ;;
+  selftest) exec bash "$ROOT/tests/selftest.sh" ;;
+  update) cd "$ROOT" && git pull --ff-only && exec bash install.sh "$@" ;;  # 不带参数时沿用上次安装选项
+  *) echo "未知命令: $cmd" >&2; usage >&2; exit 2 ;;
+esac

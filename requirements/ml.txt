@@ -1,0 +1,16 @@
+# 图片去水印 + 本机人声分离（.venv-ml，Python 3.12，CPU 版 torch 来自 download.pytorch.org/whl/cpu）
+# 版本钉死：这套组合已实测。torch 由 install.sh 先单独装。
+numpy==2.2.3
+pillow==11.1.0
+opencv-python-headless==4.11.0.86
+onnxruntime==1.32.0
+pyclipper==1.4.0
+shapely==2.2.0
+six==1.17.0
+pyyaml==6.0.3
+requests==2.34.2
+huggingface-hub==0.29.1
+safetensors==0.8.0
+einops==0.8.1
+tqdm==4.70.1
+demucs==4.1.0
