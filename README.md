@@ -1,5 +1,8 @@
 # 素材工具 sucai-toolkit
 
+> **使用、安装即视为同意[免责声明](DISCLAIMER.md)。禁止将本工具用于任何违法犯罪用途，后果由使用者自行承担。**
+> **By installing or using this software you agree to the [Disclaimer](DISCLAIMER.md). Illegal use is prohibited; you bear all consequences.**
+
 **发一个链接，拿回最高清、无水印的原片 + 文案 + 数据。** 给 AI 助手用的免费开源素材工具，作者 **shimis**（X：[@shimis_88](https://x.com/shimis_88)）。
 
 - 抖音、X/推特、B 站、微博、YouTube、小红书 → 原片或全部原图、文案、点赞评论转发、发布时间
@@ -54,9 +57,9 @@ sucai get "https://x.com/…/status/…" # sucai help 看全部命令
 
 ## 许可证
 
-MIT，© shimis（@shimis_88）。安装时下载的第三方软件各自遵循原许可证，其中 gifski 为 AGPL-3.0（可 `--no-gifski`），见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。
-去水印、人声分离只适合个人自用素材，请尊重原作者版权。
+MIT，© shimis（@shimis_88）。使用前请阅读并同意 [免责声明](DISCLAIMER.md)。安装时下载的第三方软件各自遵循原许可证，其中 gifski 为 AGPL-3.0（可 `--no-gifski`），见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。
+去水印仅可用于您有权处理的内容，且只适合个人自用，请尊重原作者版权。
 
 ---
 
-**English** — sucai-toolkit by shimis ([@shimis_88](https://x.com/shimis_88)): a free, open-source media toolkit for AI agents. Send a public link (Douyin, X, Bilibili, Weibo, YouTube, Xiaohongshu…), get the highest-quality watermark-free original, caption and stats; plus X-ready compression, GIF, image watermark removal, vocal separation and transcription. No paid APIs, no cookies, no login, no GPU. Tell your agent: *"Clone https://github.com/shimis88/sucai-toolkit and follow AGENTS.md to install it, then act as my media assistant."*
+**English** — sucai-toolkit by shimis ([@shimis_88](https://x.com/shimis_88)): a free, open-source media toolkit for AI agents. Send a public link (Douyin, X, Bilibili, Weibo, YouTube, Xiaohongshu…), get the highest-quality watermark-free original, caption and stats; plus X-ready compression, GIF, image watermark removal, vocal separation and transcription. No paid APIs, no cookies, no login, no GPU. Use constitutes agreement to the Disclaimer (DISCLAIMER.md). Tell your agent: *"Clone https://github.com/shimis88/sucai-toolkit and follow AGENTS.md to install it, then act as my media assistant."*
